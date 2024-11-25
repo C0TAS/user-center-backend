@@ -11,7 +11,7 @@ server:
   servlet:
     context-path: /api
     session:
-      timeout: 86401
+      timeout: 86400
 
 mybatis-plus:
   configuration:
