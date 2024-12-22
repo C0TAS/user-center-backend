@@ -2,22 +2,25 @@ package com.cotas.usercenter.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.cotas.usercenter.common.BaseResponse;
 import com.cotas.usercenter.common.ErrorCode;
-import com.cotas.usercenter.common.Result;
 import com.cotas.usercenter.exception.BusinessException;
 import com.cotas.usercenter.model.domain.User;
 import com.cotas.usercenter.service.UserService;
 import com.cotas.usercenter.mapper.UserMapper;
 import com.cotas.usercenter.utils.MD5Utils;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.cotas.usercenter.constant.UserConstant.ADMIN_ROLE;
 import static com.cotas.usercenter.constant.UserConstant.USER_LOGIN_STATE;
@@ -81,6 +84,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserAccount(userAccount);
         user.setPassWord(MD5userPassword);
         user.setInviteCode(inviteCode);
+        //设置默认头像
+        user.setAvatarUrl("https://pic.imgdb.cn/item/67678eebd0e0a243d4e7efb9.png");
+        //设置默认用户名是账号
+        user.setUserName(userAccount);
         int insert = userMapper.insert(user);
 
         //4.返回新用户id
@@ -118,7 +125,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         User user = userMapper.selectOne(queryWrapper);
         if(user == null){
             log.info("user login failed. userAccount or userPassWord is unavailable");
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户名不存在");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户名不存在或密码错误");
         }
 
         //4.将用户信息脱敏
@@ -157,6 +164,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //添加用户权限后的字段后，不要忘记设置这个
         returnUser.setUserRole(user.getUserRole());
         returnUser.setInviteCode(user.getInviteCode());
+        returnUser.setTags(user.getTags());
         return returnUser;
     }
 
@@ -167,6 +175,66 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         request.getSession().removeAttribute(USER_LOGIN_STATE);
     }
+
+
+    @Deprecated
+    public List<User> searchUserByTagsBySQL(List<String> tagNameList) {
+        //判空
+        if (CollectionUtils.isEmpty(tagNameList)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //1.拼接方式查询
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        //循环在查询条件加标签，注意用like的方式加
+        //tag是数据库字段名
+        for (String tagName : tagNameList) {
+            queryWrapper.like("tags",tagName);
+        }
+        //查询
+        List<User> users = userMapper.selectList(queryWrapper);
+        //将用户信息脱敏后返回
+        return  users.stream().map(this::secureUser).collect(Collectors.toList());
+        /*
+        等于
+        List<User> secureUsers = new ArrayList<>();
+        for (User user : users) {
+            User secureUser = this.secureUser(user);
+            secureUsers.add(secureUser);
+           }
+         return secureUsers;
+
+         */
+    }
+
+    @Override
+    public List<User> searchUserByTags(List<String> tagNameList) {
+        //判空
+        if (CollectionUtils.isEmpty(tagNameList)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //2.取出所有用户，再在内存中判断
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        List<User> users = userMapper.selectList(queryWrapper);
+
+        //Gson 进行序列化和反序列化
+        Gson gson = new Gson();
+        return users.stream().filter(user->{
+            String userTag = user.getTags();
+//            if(StringUtils.isBlank(userTag)){
+//                return false;
+//            }
+            Set<String> tagNameSet = gson.fromJson(userTag, new TypeToken<Set<String>>(){}.getType());
+            //java8  Optional 来判断空
+            tagNameSet = Optional.ofNullable(tagNameSet).orElse(new HashSet<>());
+            for (String tagName : tagNameList) {
+                if(!tagNameSet.contains(tagName)){
+                    return false;
+                }
+            }
+            return true;
+        }).map(this::secureUser).collect(Collectors.toList());
+    }
+
 }
 
 

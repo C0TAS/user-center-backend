@@ -21,6 +21,7 @@ import static com.cotas.usercenter.constant.UserConstant.USER_LOGIN_STATE;
 
 @RestController
 @RequestMapping("user")
+@CrossOrigin
 public class UserController {
 
     @Resource
@@ -134,5 +135,20 @@ public class UserController {
     public BaseResponse<Boolean> logout(HttpServletRequest request){
         userService.logout(request);
         return Result.success(true);
+    }
+
+    /**
+     * 根据标签搜索用户
+     * @param tagNameList
+     * @return
+     */
+    @GetMapping("search/tags")
+    public BaseResponse<List<User>> searchUserByTags(@RequestParam(required = false) List<String> tagNameList) {
+        if (tagNameList == null) {
+            throw new BusinessException(ErrorCode.PARAMS_BLANK);
+        }
+        List<User> users = userService.searchUserByTags(tagNameList);
+        return Result.success(users);
+
     }
 }

@@ -86,6 +86,18 @@ public class User implements Serializable {
     @TableField(value = "inviteCode")
     private String inviteCode;
 
+    /**
+     * 标签
+     */
+    @TableField(value = "tags")
+    private String tags;
+
+    /**
+     * 个人简介
+     */
+    @TableField(value = "profile")
+    private String profile;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

@@ -15,6 +15,8 @@ create table user
     createTime  datetime default CURRENT_TIMESTAMP null comment '创建时间',
     updateTime  datetime default CURRENT_TIMESTAMP null comment '更新时间',
     isDelete    tinyint  default 0                 null comment '是否删除',
-    inviteCode  varchar(256)                       null comment '邀请码'
+    inviteCode  varchar(256)                       null comment '邀请码',
+    tags        varchar(1024)                      null comment '标签列表',
+    profile     varchar(512)                       null comment '个人简介'
 );
 

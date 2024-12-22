@@ -1,8 +1,11 @@
 package com.cotas.usercenter.service;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import com.cotas.usercenter.mapper.UserMapper;
 import com.cotas.usercenter.model.domain.User;
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,4 +85,12 @@ public class UserserviceTest {
         System.out.println("ok");
 
     }*/
+
+    @Test
+    public void tagTest(){
+        List<String> list = Arrays.asList("cpp", "java");
+        List<User> users = userService.searchUserByTags(list);
+        System.out.println("users = " + users);
+        Assertions.assertNotNull(users);
+    }
 }

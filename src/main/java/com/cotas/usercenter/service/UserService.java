@@ -5,6 +5,7 @@ import com.cotas.usercenter.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
 * @author COTAS
@@ -51,5 +52,7 @@ public interface UserService extends IService<User> {
      * @param request
      */
     void logout(HttpServletRequest request);
+
+    List<User> searchUserByTags(List<String> tagNameList);
 }
 
